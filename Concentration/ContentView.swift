@@ -344,7 +344,7 @@ struct ContentView: View {
     private func resetGame() {
         if gameStarted {
             setupGame()
-            stopBGM()
+            playBGM()
         }
     }
 }
