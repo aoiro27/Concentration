@@ -9,6 +9,9 @@ import SwiftUI
 import PhotosUI
 import AVFoundation
 
+let totalPairs = 5
+let totalCards = totalPairs * 2
+
 struct ContentView: View {
     @State private var cards: [Card] = []
     @State private var selectedCards: [Int] = []
@@ -43,7 +46,7 @@ struct ContentView: View {
                     Text("写真を選んでね！")
                         .font(.title2)
                         .foregroundColor(.purple)
-                    Text("\(selectedPhotos.count)/8枚選択済み")
+                    Text("\(selectedPhotos.count)/5枚選択済み")
                         .font(.headline)
                         .foregroundColor(.orange)
 
@@ -91,7 +94,7 @@ struct ContentView: View {
                             .cornerRadius(20)
                             .shadow(radius: 5)
                         }
-                        .disabled(selectedPhotos.count >= 8)
+                        .disabled(selectedPhotos.count >= 5)
                         .confirmationDialog("写真を選択", isPresented: $showingActionSheet, titleVisibility: .visible) {
                             Button("カメラで撮影") { showingCamera = true }
                             Button("フォトライブラリから選択") { showingPhotoPicker = true }
@@ -99,7 +102,7 @@ struct ContentView: View {
                         }
 
                         Button(action: {
-                            if selectedPhotos.count >= 8 {
+                            if selectedPhotos.count >= 5 {
                                 startGame()
                             }
                         }) {
@@ -109,12 +112,12 @@ struct ContentView: View {
                             }
                             .padding(.horizontal, 30)
                             .padding(.vertical, 15)
-                            .background(selectedPhotos.count >= 8 ? Color.green : Color.gray)
+                            .background(selectedPhotos.count >= 5 ? Color.green : Color.gray)
                             .foregroundColor(.white)
                             .cornerRadius(20)
                             .shadow(radius: 5)
                         }
-                        .disabled(selectedPhotos.count < 8)
+                        .disabled(selectedPhotos.count < 5)
                     }
                 }
                 .padding()
@@ -144,7 +147,7 @@ struct ContentView: View {
                 .frame(height: 32)
 
                 GeometryReader { geometry in
-                    let columns = 4
+                    let columns = 5
                     let rows = (cards.count + columns - 1) / columns
                     let spacing: CGFloat = 12
                     let verticalPadding: CGFloat = 48 + 32 + 60 + 24
@@ -232,7 +235,7 @@ struct ContentView: View {
     private func setupGame() {
         cards = []
         // 選択された写真を使ってペアを作成
-        let photoPairs = selectedPhotos + selectedPhotos
+        let photoPairs = Array(selectedPhotos.prefix(totalPairs)) + Array(selectedPhotos.prefix(totalPairs))
         cards = photoPairs.shuffled().enumerated().map { index, photo in
             Card(id: index, emoji: "", isFaceUp: false, isMatched: false, frontImage: photo)
         }
@@ -408,7 +411,7 @@ struct PhotoPicker: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> PHPickerViewController {
         var config = PHPickerConfiguration()
         config.filter = .images
-        config.selectionLimit = 8 - selectedImages.count
+        config.selectionLimit = 5 - selectedImages.count
         
         let picker = PHPickerViewController(configuration: config)
         picker.delegate = context.coordinator
