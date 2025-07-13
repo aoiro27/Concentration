@@ -27,27 +27,26 @@ struct ContentView: View {
     let emojis = ["🐶", "🐱", "🐰", "🐼", "🐨", "🐯", "🦁", "🐸", "🐵", "🐷", "🐮", "🐷"]
     
     var body: some View {
-        VStack {
-            // ゲームタイトル
-            Text("神経衰弱ゲーム")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(.blue)
-                .padding()
-                .scaleEffect(gameCompleted ? 1.1 : 1.0)
-                .animation(.easeInOut(duration: 0.5).repeatCount(3), value: gameCompleted)
-            
+        VStack(spacing: 0) {
+            Spacer().frame(height: UIApplication.shared.windows.first?.safeAreaInsets.top ?? 20)
+
             if !gameStarted {
                 // 写真選択画面
+                Text("しきしろ絵あわせ")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundColor(.blue)
+                    .padding(.top, 8)
+                    .padding(.bottom, 4)
+
                 VStack(spacing: 30) {
                     Text("写真を選んでね！")
                         .font(.title2)
                         .foregroundColor(.purple)
-                    
                     Text("\(selectedPhotos.count)/8枚選択済み")
                         .font(.headline)
                         .foregroundColor(.orange)
-                    
+
                     // 選択された写真のプレビュー
                     if !selectedPhotos.isEmpty {
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -76,7 +75,7 @@ struct ContentView: View {
                             .padding(.horizontal)
                         }
                     }
-                    
+
                     HStack(spacing: 30) {
                         Button(action: {
                             showingActionSheet = true
@@ -98,7 +97,7 @@ struct ContentView: View {
                             Button("フォトライブラリから選択") { showingPhotoPicker = true }
                             Button("キャンセル", role: .cancel) {}
                         }
-                        
+
                         Button(action: {
                             if selectedPhotos.count >= 8 {
                                 startGame()
@@ -120,55 +119,60 @@ struct ContentView: View {
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
+                Spacer()
             } else {
                 // ゲーム画面
-                // スコア表示
+                Text("しきしろ絵あわせ")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundColor(.blue)
+                    .padding(.top, 8)
+                    .padding(.bottom, 4)
+                    .frame(height: 48)
+
                 HStack {
                     Text("見つけたペア: \(matchedPairs.count)")
                         .font(.headline)
                         .foregroundColor(.green)
-                    
                     Spacer()
-                    
                     Text("残り: \(cards.count / 2 - matchedPairs.count)")
                         .font(.headline)
                         .foregroundColor(.orange)
                 }
                 .padding(.horizontal)
-                .frame(maxWidth: .infinity)
-                
+                .padding(.bottom, 8)
+                .frame(height: 32)
+
                 GeometryReader { geometry in
                     let columns = 4
                     let rows = (cards.count + columns - 1) / columns
                     let spacing: CGFloat = 12
-                    let topArea: CGFloat = 160 // タイトル・スコア表示分
-                    let bottomArea: CGFloat = 100 // ボタン分
-
+                    let verticalPadding: CGFloat = 48 + 32 + 60 + 24
                     let availableWidth = geometry.size.width - spacing * CGFloat(columns - 1)
-                    let availableHeight = geometry.size.height - topArea - bottomArea - spacing * CGFloat(rows - 1)
+                    let availableHeight = geometry.size.height - verticalPadding - spacing * CGFloat(rows - 1)
 
                     let cardWidth = availableWidth / CGFloat(columns)
-                    let cardHeight = availableHeight / CGFloat(rows)
-                    let cardSize = min(cardWidth, cardHeight * 1.5) // アスペクト比2:3
+                    let cardHeight = cardWidth * 1.5
+                    let maxCardHeight = availableHeight / CGFloat(rows)
+                    let finalCardHeight = min(cardHeight, maxCardHeight)
+                    let finalCardWidth = finalCardHeight / 1.5
 
-                    VStack(spacing: 0) {
+                    VStack {
                         Spacer(minLength: 0)
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: spacing), count: columns), spacing: spacing) {
                             ForEach(0..<cards.count, id: \.self) { index in
                                 CardView(card: cards[index])
-                                    .frame(width: cardSize, height: cardSize * 1.5)
+                                    .frame(width: finalCardWidth, height: finalCardHeight)
                                     .onTapGesture {
                                         cardTapped(at: index)
                                     }
                             }
                         }
-                        .frame(maxWidth: .infinity, maxHeight: availableHeight)
                         Spacer(minLength: 0)
                     }
-                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                
-                // ボタン群
+
                 HStack(spacing: 30) {
                     Button(action: {
                         resetGame()
@@ -184,7 +188,7 @@ struct ContentView: View {
                         .cornerRadius(18)
                         .shadow(radius: 4)
                     }
-                    
+
                     Button(action: {
                         gameStarted = false
                         selectedPhotos.removeAll()
@@ -201,14 +205,12 @@ struct ContentView: View {
                         .shadow(radius: 4)
                     }
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
+                .padding(.bottom, 24)
+                .frame(height: 60)
             }
-            
-            Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.white)
+        .edgesIgnoringSafeArea(.all)
         .onAppear {
             setupGame()
         }
