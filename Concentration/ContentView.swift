@@ -21,6 +21,8 @@ struct ContentView: View {
     @State private var audioPlayer: AVAudioPlayer?
     @State private var showingPhotoSelection = false
     @State private var gameStarted = false
+    @State private var isChecking = false
+    @State private var bgmPlayer: AVAudioPlayer?
     
     let emojis = ["🐶", "🐱", "🐰", "🐼", "🐨", "🐯", "🦁", "🐸", "🐵", "🐷", "🐮", "🐷"]
     
@@ -240,23 +242,66 @@ struct ContentView: View {
     private func startGame() {
         setupGame()
         gameStarted = true
+        playBGM()
     }
     
     private func cardTapped(at index: Int) {
         guard !cards[index].isMatched && !cards[index].isFaceUp else { return }
-        
-        // カードを裏返す
+        guard !isChecking else { return } // 判定中は何もしない
+
         cards[index].isFaceUp = true
-        
-        // 効果音（実際のアプリでは音ファイルを追加）
-        // playFlipSound()
-        
+        playFlipSound()
+
         if selectedCards.count == 0 {
             selectedCards.append(index)
         } else if selectedCards.count == 1 {
             selectedCards.append(index)
+            isChecking = true
             checkForMatch()
         }
+    }
+    
+    private func playSound(named name: String) {
+        guard let url = Bundle.main.url(forResource: name, withExtension: "mp3") else { return }
+        do {
+            audioPlayer = try AVAudioPlayer(contentsOf: url)
+            audioPlayer?.play()
+        } catch {
+            print("音声ファイルの再生に失敗しました: \(error)")
+        }
+    }
+
+    private func playMatchSound() {
+        playSound(named: "match")
+    }
+
+    private func playMissSound() {
+        playSound(named: "miss")
+    }
+
+    private func playClearSound() {
+        playSound(named: "clear")
+    }
+    
+    private func playFlipSound() {
+        playSound(named: "flip")
+    }
+
+    private func playBGM() {
+        guard let url = Bundle.main.url(forResource: "bgm", withExtension: "mp3") else { return }
+        do {
+            bgmPlayer = try AVAudioPlayer(contentsOf: url)
+            bgmPlayer?.numberOfLoops = -1 // ループ再生
+            bgmPlayer?.volume = 0.5
+            bgmPlayer?.play()
+        } catch {
+            print("BGMの再生に失敗しました: \(error)")
+        }
+    }
+
+    private func stopBGM() {
+        bgmPlayer?.stop()
+        bgmPlayer = nil
     }
     
     private func checkForMatch() {
@@ -273,25 +318,28 @@ struct ContentView: View {
                 cards[firstIndex].isMatched = true
                 cards[secondIndex].isMatched = true
                 matchedPairs.insert(firstPhotoIndex)
-                
-                // 効果音（実際のアプリでは音ファイルを追加）
-                // playMatchSound()
+                playMatchSound()
                 
                 if matchedPairs.count == cards.count / 2 {
+                    playClearSound()
                     gameCompleted = true
+                    stopBGM()
                 }
             } else {
                 // マッチしなかった場合
                 cards[firstIndex].isFaceUp = false
                 cards[secondIndex].isFaceUp = false
+                playMissSound()
             }
             selectedCards = []
+            isChecking = false
         }
     }
     
     private func resetGame() {
         if gameStarted {
             setupGame()
+            stopBGM()
         }
     }
 }
