@@ -359,6 +359,7 @@ struct Card: Identifiable {
 
 struct CardView: View {
     let card: Card
+    @State private var isMatchedAnimation = false
     
     var body: some View {
         ZStack {
@@ -398,9 +399,24 @@ struct CardView: View {
             }
         }
         .opacity(card.isMatched ? 0.5 : 1.0)
-        .scaleEffect(card.isMatched ? 0.9 : 1.0)
+        .scaleEffect(card.isMatched ? (isMatchedAnimation ? 3.9 : 0.9) : 1.0)
         .animation(.easeInOut(duration: 0.3), value: card.isFaceUp)
         .animation(.easeInOut(duration: 0.3), value: card.isMatched)
+        .onChange(of: card.isMatched) { newValue in
+            if newValue {
+                // マッチした時に拡大アニメーションを実行
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isMatchedAnimation = true
+                }
+                
+                // 0.5秒後に元のサイズに戻す
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isMatchedAnimation = false
+                    }
+                }
+            }
+        }
     }
 }
 
